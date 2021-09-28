@@ -4,6 +4,9 @@ const launchBrowser = async () => {
     const browser = await puppeteer.launch({headless: false});
     const page = await browser.newPage();
     await page.goto('https://atlas.emory.edu/', {waitUntil: 'networkidle2'});
+    await page.addStyleTag({ content: "{scroll-behavior: auto !important;}" });
+    await page.setViewport( { 'width' : 2460, 'height' : 3000 } );
+    await page.setUserAgent( 'UA-TEST' );
     await page.select('#crit-camp', 'ATL');
     await page.select('#crit-career', 'UCOL');
     await page.waitForTimeout(2000);
@@ -32,30 +35,104 @@ const launchBrowser = async () => {
         //     for (let element of elements)
         //         element.click();
         // });
-        await page.evaluate(() => {
-            let elements = $('.course-section.course-section.course-section--matched').toArray();
-            for (let i = 0; i < elements.length; i++) {
-                $(elements[i]).click();
-                setTimeout(() => {
-
-                }, 2000);
-            }
-        });
+        // await page.evaluate(() => {
+        //     let elements = $('.course-section.course-section.course-section--matched').toArray();
+        //     for (let i = 0; i < elements.length; i++) {
+        //         $(elements[i]).click();
+        //         setTimeout(() => {
+        //
+        //         }, 2000);
+        //     }
+        // });
         code.each(function () {
             console.log($(this).text());
         });
         title.each(function () {
             console.log($(this).text());
         });
-        const sections = await page.$$('a[data-action="result-detail"][role="row"]');
-        const numSections = sections.length;
-        for (const section of sections) {
 
-            await section.click();
-            await page.waitForTimeout(10*1000);
+        //const section = sections[0];
+        //const numSections = sections.length;
+        //console.log(numSections);
+        // await page.$eval('a.course-section', (elem) => {
+        //     elem.click();
+        // });
+        // await page.evaluate(()=> {
+        //     document.querySelectorAll("a.course-section")[0].click();
+        // });
+        // const places = await page.$$eval('.course-sections a[role="row"]', (elems) => {
+        //     const sections = [];
+        //     let query = document.querySelector(' .course-sections .course-section.course-section--viewing.course-section--matched');
+        //     if (query === null) {
+        //         query = document.querySelector(' .course-sections .course-section.course-section--viewing.course-section--not-matched');
+        //     }
+        //     if (query === null) {
+        //         query = document.querySelector('.course-sections .course-section.course-section--matched');
+        //     }
+        //
+        //     for (let i = 0; i < elems.length; i++) {
+        //         console.log('----------------');
+        //         console.log(query);
+        //         console.log('--------------');
+        //         //console.log(query);
+        //         if (!query) {
+        //             break;
+        //         }
+        //         $('body').on('DOMSubtreeModified', '.dtl-section', function(){
+        //             console.log('changed');
+        //         });
+        //         query.click();
+        //         if (query.nextSibling === null) {
+        //             break;
+        //         }
+        //
+        //         query = query.nextElementSibling;
+        //
+        //     }
+        //     return sections;
+        // });
+        // console.log(places);
+        // await page.waitForTimeout(3000);
+        // const sections = await page.$$('.course-sections a[role="row"]');
 
-            const content = await page.content();
-            const $ = cheerio.load(content);
+        // if(query === null) {
+        //     query = await page.$('.course-sections .course-section.course-section--matched');
+        // }
+        // for(let section of sections) {
+        //     await section.click();
+        // }
+        // for(let i = 0; i < numSections.length; i++) {
+        //     await numSections[i].click();
+            // if(query === null) {
+            //     break;
+            // }
+            // console.log(query._remoteObject.description);
+            // await query.click();
+            // // await page.waitForNavigation();
+            // const next = await page.evaluateHandle(query => {
+            //     console.log(query);
+            //     return query.nextSibling;
+            // }, query);
+            // if(next === null) {
+            //     break;
+            // }
+            // query = next;
+        // }
+        const sections = await page.$$('.course-sections a[role="row"]');
+        // let query = await page.$(' .course-sections .course-section.course-section--viewing.course-section--matched');
+        // if(query === null) {
+        //     query = await page.$(' .course-sections .course-section.course-section--viewing.course-section--not-matched');
+        // }
+        // if(query === null) {
+               let query = await page.$('.course-sections .course-section.course-section--matched');
+            // }
+        for (let i = 1 ; i < sections.length; i++) {
+            if(!query || query._remoteObject.description === null || query._remoteObject.description === undefined ) {
+                break;
+            }
+            console.log(query._remoteObject.description);
+            await query.click();
+            await page.waitForTimeout(5000);
             const enrollmentStatus = $('.text.detail-enrl_stat_html');
             const seats = $('.text.detail-seats');
             const instructionMethod = $('.text.detail-inst_method_code');
@@ -65,15 +142,12 @@ const launchBrowser = async () => {
             const courseNotes = $('.section__content .note-wrapper .note-paragraph');
             const courseLocation = $('.section.section--meeting_html .section__content .meet');
             const credits = $('.text.detail-hours_html');
-
             credits.each(function () {
                 console.log($(this).text());
             });
-
             seats.each(function () {
                 console.log($(this).text());
             });
-
             enrollmentStatus.each(function () {
                 console.log($(this).text());
             });
@@ -95,13 +169,22 @@ const launchBrowser = async () => {
             courseLocation.each(function () {
                 console.log($(this).text());
             });
-            await page.waitForTimeout(2000);
 
+            if(query._remoteObject.description === 'a.course-section.course-section--viewing.course-section--matched') {
+                console.log('HEEEERREE');
+                break;
+            }
+            query = await page.evaluateHandle(el => el.nextSibling , query);
+            if(!query || query._remoteObject.description === null || query._remoteObject.description === undefined ) {
+                break;
+            }
         }
         await page.click('.panel.panel--2x.panel--kind-details.panel--visible .panel__content a.panel__back.icon-link');
         await page.waitForTimeout(2000);
         //await page.click(back);
+        //console.log(places);
     }
+
 }
 
 launchBrowser();
