@@ -128,19 +128,19 @@ const launchBrowser = async () => {
         // let firstChild = (await page.$('.course-sections'))?.$eval('')
         // }
 
-        const sections = await page.$$('.section__content .course-sections a');
-        for (let i = 0; i < sections.length; i++) {
+        // const sections = await page.$$('.section__content .course-sections a');
+        // for (let i = 0; i < sections.length; i++) {
             // if(!query || query._remoteObject.description === null || query._remoteObject.description === undefined ) {
             //     break;
             // }
             //console.log(sections[i]._remoteObject.preview);
-            const root = await page.$('.section__content .course-sections a');
-            await root.click();
-            const content = await page.content();
-            const $ = cheerio.load(content);
-            await page.waitForTimeout(5000);
-            await sections[i].click();
-            await page.waitForTimeout(5000);
+            // const root = await page.$('.section__content .course-sections a');
+            // await root.click();
+            // const content = await page.content();
+            // const $ = cheerio.load(content);
+            // await page.waitForTimeout(5000);
+            // await sections[i].click();
+            // await page.waitForTimeout(5000);
 
             const enrollmentStatus = $('.text.detail-enrl_stat_html');
             const seats = $('.text.detail-seats');
@@ -187,7 +187,7 @@ const launchBrowser = async () => {
             // if(!query || query._remoteObject.description === null || query._remoteObject.description === undefined ) {
             //     break;
             // }
-        }
+        // }
         await page.click('.panel.panel--2x.panel--kind-details.panel--visible .panel__content a.panel__back.icon-link');
         await page.waitForTimeout(2000);
         //await page.click(back);
