@@ -1,21 +1,24 @@
+/*
+    External Imports
+ */
 const express = require('express');
 const helmet = require('helmet');
-const app = express();
 const mongoose = require('mongoose');
-const User = require('./Models/user');
+const cron = require('node-cron');
+/*
+    Local Imports
+ */
+const authRoute = require('./Routes/auth');
+const courseRoute = require('./Routes/courses');
+const scrape = require('./Util/timer');
 
+
+scrape.scrapeEvery12Hrs();
+const app = express();
 app.use(helmet());
 app.use(express.json());
-
-app.post('/login', async (req, res, next) => {
-
-        const user = await User.create({
-            email: req.body.email,
-            password: req.body.password
-        });
-        res.send(user);
-})
-
+app.use(authRoute);
+app.use(courseRoute);
 
 
 app.listen(3000, async() => {
