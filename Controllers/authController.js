@@ -1,6 +1,6 @@
 
 const bcrypt = require('bcryptjs');
-const mailer = require('nodemailer');
+const send = require('../Util/mailer');
 const User = require('../Models/user');
 
 module.exports.postLogin = async (req, res, next) => {
@@ -38,27 +38,29 @@ module.exports.postLogin = async (req, res, next) => {
 }
 
 module.exports.postSignUp = async (req, res, next) => {
-    const exist = await User.exists({
-        email: req.body.email
-    });
-
-    if(!exist) {
-        if(req.body.password.length < 8 || !req.body.password.match("^[A-Za-z0-9]")) { 
-            return res.send('Password must be at least 8 alphanumeric characters');
+    try {
+        console.log(req.body.email);
+        console.log(req.body.password);
+        const email = req.body.email;
+        const password = req.body.password;
+        const hp = await bcrypt.hash(password, 10);
+        const alreadyExists = User.find({email});
+        if(alreadyExists){
+            return res.status(404).send('User Already exists');
         }
-
-        bcrypt.genSalt(10, function(err, salt) { 
-            bcrypt.hash(req.body.password, salt, async function(err, hash) {
-                const user = new User({
-                    email: req.body.email,
-                    password: hash
-                });
-                await user.save();
-            });
+        const user = await new User({
+            email,
+            password: hp,
+            isVerified: false
+        });
+        await user.save();
+        await send.sendEmail(email);
+        res.status(200).json({
+            user: user
         });
     }
-    else { //redirect user to login or just tell them the email exists?
-        res.send('An account already exists with the email ' + req.body.email + '.');
-    }
+    catch (e) {
+        console.log(e.message);
 
+    }
 }
