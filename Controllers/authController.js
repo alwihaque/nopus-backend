@@ -2,9 +2,13 @@
 const bcrypt = require('bcryptjs');
 const send = require('../Util/mailer');
 const User = require('../Models/user');
+const {validationResult} = require('express-validator');
 
 module.exports.postLogin = async (req, res, next) => {
-    
+    const errors = validationResult(req);
+    if(errors) {
+        return res.status(404).send(errors);
+    }
     // Placeholder values for testing logic
     const email = req.body.email; // I'm assuming the actual value will be in req.email ?
     const password = req.body.password;
@@ -38,13 +42,18 @@ module.exports.postLogin = async (req, res, next) => {
 }
 
 module.exports.postSignUp = async (req, res, next) => {
+    const errors = validationResult(req);
+    if(errors) {
+        return res.status(404).send(errors);
+    }
     try {
         console.log(req.body.email);
         console.log(req.body.password);
         const email = req.body.email;
         const password = req.body.password;
         const hp = await bcrypt.hash(password, 10);
-        const alreadyExists = User.find({email});
+        const alreadyExists = await User.findOne({email});
+
         if(alreadyExists){
             return res.status(404).send('User Already exists');
         }
