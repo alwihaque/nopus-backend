@@ -13,7 +13,18 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         required: true,
         default: false
-    }
+    },
+    coursesTaken: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Course',
+        required: false,
+        default: []
+    }],
+    courseSchedules: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'CourseSchedule',
+        default: []
+    }]
 
 });
 
