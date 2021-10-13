@@ -1,4 +1,3 @@
-
 const bcrypt = require('bcryptjs');
 const send = require('../Util/mailer');
 const User = require('../Models/user');
@@ -6,23 +5,22 @@ const {validationResult} = require('express-validator');
 
 module.exports.postLogin = async (req, res, next) => {
     const errors = validationResult(req);
-    if(errors) {
+    if (errors.length > 0) {
         return res.status(404).send(errors);
     }
-    // Placeholder values for testing logic
-    const email = req.body.email; // I'm assuming the actual value will be in req.email ?
+
+    const email = req.body.email;
     const password = req.body.password;
-    // Query user information given email
+
     try {
-        const user = await User.findOne({"email":email});
-        // Check if email exists
+        const user = await User.findOne({"email": email});
+
         if (!user) return res.status(404).send("Email or password you entered was incorrect.");
-        // Check if password is correct
-        const match = await bcrypt.compare(password,user.password);
-        if(!match) {
+
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) {
             return res.status(404).send("Email or password you entered was incorrect.");
         }
-        // Check if user email is verified
         if (!user.isVerified) {
             return res.status(404).send("User is not verified. Please verify your email to login.");
         }
@@ -30,20 +28,15 @@ module.exports.postLogin = async (req, res, next) => {
             userId: user._id,
             email: user.email
         });
-    }
-    catch (e) {
+    } catch (e) {
         console.log(e.message);
     }
 
-    // If all good, send to home page
-
-
-    // Questions: Do I need to implement something to make sure the method is POST? 
 }
 
 module.exports.postSignUp = async (req, res, next) => {
     const errors = validationResult(req);
-    if(errors) {
+    if (errors.length > 0) {
         return res.status(404).send(errors);
     }
     try {
@@ -54,7 +47,7 @@ module.exports.postSignUp = async (req, res, next) => {
         const hp = await bcrypt.hash(password, 10);
         const alreadyExists = await User.findOne({email});
 
-        if(alreadyExists){
+        if (alreadyExists) {
             return res.status(404).send('User Already exists');
         }
         const user = await new User({
@@ -67,8 +60,7 @@ module.exports.postSignUp = async (req, res, next) => {
         res.status(200).json({
             user: user
         });
-    }
-    catch (e) {
+    } catch (e) {
         console.log(e.message);
 
     }

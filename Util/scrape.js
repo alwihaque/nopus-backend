@@ -26,18 +26,57 @@ module.exports.getData = async () => {
                     "method": "POST"
                 });
                 const detailsRes = await details.json();
-                console.log(detailsRes.key, detailsRes.code);
+                //console.log(detailsRes.key, detailsRes.code, detailsRes.hours_html, detailsRes.meeting_html);
+                let classCode = detailsRes.key;
+                let courseId = detailsRes.code;
+                let classCrn = detailsRes.crn;
+                let classTitle = detailsRes.title;
+                let classCred = detailsRes.hours_html;
+                let classSection = detailsRes.section;
+                let meetingInfo = 'No meeting info';
+                let totalSeats = detailsRes.seats.split('<strong>')[1].split(' ')[2];
+                let availableSeats = detailsRes.seats.split('<strong>')[2].split(' ')[2].split('<br/>')[0];
+                let waitListTotal = 0;
+                if(detailsRes.seats.split('<strong>')[3] === undefined){
+                    waitListTotal = 0;
+                }
+                else {
+                    waitListTotal = detailsRes.seats.split('<strong>')[3].split(' ')[2];
+                }
+                let section = detailsRes.allInGroup.filter(section => {
+                    return section.key === classCode;
+                })[0];
+                let meeting = section.meets;
+                if(detailsRes.meeting_html.split(/<[^>]*>/g)[2] === ' in ONLINE'){
+                    meetingInfo = 'Online';
+                }
+                else if(detailsRes.meeting_html.split(/<[^>]*>/g)[3] !== undefined ) {
+                    meetingInfo = detailsRes.meeting_html.split(/<[^>]*>/g)[3];
+                }
+                console.log(classTitle);
                 const course = new Course({
-                    code: detailsRes.code,
-                    crn: detailsRes.crn,
-                    title: detailsRes.title,
-                    creditHours: detailsRes.hours_html
+                    code: courseId,
+                    crn: classCrn,
+                    title: classTitle,
+                    creditHours: classCred,
+                    totalSeats,
+                    availableSeats,
+                    waitListTotal,
+                    section: classSection,
+                    meeting,
+                    meetingInfo
                 });
                 const exist = await Course.exists({
-                    code: detailsRes.code,
-                    crn: detailsRes.crn,
-                    title: detailsRes.title,
-                    creditHours: detailsRes.hours_html
+                    code: classCode,
+                    crn: classCrn,
+                    title: classTitle,
+                    creditHours: classCred,
+                    totalSeats,
+                    availableSeats,
+                    waitListTotal,
+                    section: classSection,
+                    meeting,
+                    meetingInfo
                 });
                 if (!exist) {
                     await course.save();
@@ -54,4 +93,5 @@ module.exports.getData = async () => {
     }
 
 }
+
 

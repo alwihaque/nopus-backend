@@ -4,10 +4,7 @@
 const express = require('express');
 const helmet = require('helmet');
 const mongoose = require('mongoose');
-const cron = require('node-cron');
-/*
-    Local Imports
- */
+
 const authRoute = require('./Routes/auth');
 const courseRoute = require('./Routes/courses');
 const scrape = require('./Util/timer');
