@@ -46,7 +46,76 @@ module.exports.getData = async () => {
                 let section = detailsRes.allInGroup.filter(section => {
                     return section.key === classCode;
                 })[0];
-                let meeting = section.meets;
+                //parse meeting times into something more useable
+                let meeting = (function() {
+                    if((section.meets == "Does Not Meet" || section.meets == "Meets Online")) {
+                        return [];
+                    }
+                    var ap = section.meets.substring(section.meets.length - 1);
+                    var times  = new Array();
+                    var end = 0;
+                    var start = 0;
+                    let i = section.meets.length - 1;
+                    let k = section.meets.length;
+                    for(; i >= 0; i--) {
+                        if (section.meets[i] == "-") {
+                            end += parseInt(section.meets.substring(i+1, k));
+                            if(ap == "p") {
+                                end += 12;
+                            }
+                            break;
+                        }
+                        if(section.meets[i] == ":") {
+                            k = i;
+                            end += parseInt(section.meets.substring(k+1)) / 60.0;
+                        }
+                    }
+                    let j = i; 
+                    if(section.meets[i] == "a" || section.meets[i] == "p") {
+                        ap = section.meets[i];
+                        i--;
+                    }
+                    k = i;
+                    for (; j > 0; j--) {
+                        if(section.meets[j] == " ") {
+                            start += parseInt(section.meets.substring(j+1, k));
+                            if(ap == "p") {
+                                start += 12;
+                            }
+                            break;
+                        }
+                        if(section.meets[j] == ":") {
+                            k = j;
+                            start += parseInt(section.meets.substring(k+1,i)) / 60.0;
+                        }
+                    }
+                    for(i = 0; i != j; i++) {
+                        switch(section.meets[i]) {
+                            case("M"):
+                                times.push([2, start, end]);
+                                break;
+                            case("T"):
+                                if(section.meets[i+1] == "h"){
+                                    times.push([5, start, end]);
+                                    i++;
+                                }
+                                else {
+                                    times.push([3, start, end]);
+                                }
+                                break;
+                            case("W"): 
+                                times.push([4, start, end]);
+                                break;
+                            case("F"):
+                                times.push([6, start, end]);
+                                break;
+                            default:
+                                //console.log("Invalid meeting day");
+                                break;
+                        }
+                    }
+                    return times;
+                })();
                 if(detailsRes.meeting_html.split(/<[^>]*>/g)[2] === ' in ONLINE'){
                     meetingInfo = 'Online';
                 }
