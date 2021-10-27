@@ -35,7 +35,7 @@ const courseSchema = new mongoose.Schema({
         required: true
     },
     meeting: {
-        type: String,
+        type: Array,
         required: true
     },
     meetingInfo: {
