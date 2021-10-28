@@ -45,7 +45,7 @@ module.exports.postSignUp = async (req, res, next) => {
         const email = req.body.email;
         const password = req.body.password;
         const hp = await bcrypt.hash(password, 10);
-        const alreadyExists = await User.findOne({email});
+        const alreadyExists = await User.findOne({"email":email});
 
         if (alreadyExists) {
             return res.status(404).send('User Already exists');
