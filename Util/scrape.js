@@ -1,6 +1,7 @@
 const fetch = require('node-fetch');
 const Course = require('../Models/course');
-const Building = require('../Models/building');
+const {sendEmail} = require("./mailer");
+
 
 const params = new URLSearchParams();
 params.append('page', 'fose');
@@ -33,6 +34,7 @@ module.exports.getData = async () => {
                 let classTitle = detailsRes.title;
                 let classCred = detailsRes.hours_html;
                 let classSection = detailsRes.section;
+                let description = detailsRes.description;
                 let meetingInfo = 'No meeting info';
                 let totalSeats = detailsRes.seats.split('<strong>')[1].split(' ')[2];
                 let availableSeats = detailsRes.seats.split('<strong>')[2].split(' ')[2].split('<br/>')[0];
@@ -52,7 +54,7 @@ module.exports.getData = async () => {
                         return [];
                     }
                     var ap = section.meets.substring(section.meets.length - 1);
-                    var times  = new Array();
+                    var times  = [];
                     var end = 0;
                     var start = 0;
                     let i = section.meets.length - 1;
@@ -79,7 +81,7 @@ module.exports.getData = async () => {
                     for (; j > 0; j--) {
                         if(section.meets[j] == " ") {
                             start += parseInt(section.meets.substring(j+1, k));
-                            if(ap == "p") {
+                            if(ap === "p") {
                                 start += 12;
                             }
                             break;
@@ -89,13 +91,13 @@ module.exports.getData = async () => {
                             start += parseInt(section.meets.substring(k+1,i)) / 60.0;
                         }
                     }
-                    for(i = 0; i != j; i++) {
+                    for(i = 0; i !== j; i++) {
                         switch(section.meets[i]) {
                             case("M"):
                                 times.push([2, start, end]);
                                 break;
                             case("T"):
-                                if(section.meets[i+1] == "h"){
+                                if(section.meets[i+1] === "h"){
                                     times.push([5, start, end]);
                                     i++;
                                 }
@@ -121,22 +123,8 @@ module.exports.getData = async () => {
                 }
                 else if(detailsRes.meeting_html.split(/<[^>]*>/g)[3] !== undefined ) {
                     meetingInfo = detailsRes.meeting_html.split(/<[^>]*>/g)[3];
-                    for(let i = meetingInfo.length - 1; i >= 0; i--) {
-                        if(meetingInfo[i] == ' ') {
-                            var buildingName = meetingInfo.substring(0, i);
-                            const alreadyExists = await Building.findOne({name:buildingName});
-                            if (alreadyExists) {
-                                break;
-                            }
-                            var building = new Building({
-                                name: buildingName
-                            })
-                            building.save();
-                            break;
-                        }
-                    }
                 }
-                console.log(classTitle);
+                //console.log(classTitle);
                 const course = new Course({
                     code: courseId,
                     crn: classCrn,
@@ -147,22 +135,31 @@ module.exports.getData = async () => {
                     waitListTotal,
                     section: classSection,
                     meeting,
-                    meetingInfo
+                    meetingInfo,
+                    courseDescription : description
                 });
                 const exist = await Course.exists({
-                    code: classCode,
-                    crn: classCrn,
-                    title: classTitle,
-                    creditHours: classCred,
-                    totalSeats,
-                    availableSeats,
-                    waitListTotal,
-                    section: classSection,
-                    meeting,
-                    meetingInfo
+                    code: courseId
                 });
                 if (!exist) {
+                    console.log("here");
                     await course.save();
+                }
+                if(exist){
+                    //update course
+                    await Course.findOneAndUpdate({code:courseId},{
+                        code: courseId,
+                        crn: classCrn,
+                        title: classTitle,
+                        creditHours: classCred,
+                        totalSeats,
+                        availableSeats,
+                        waitListTotal,
+                        section: classSection,
+                        meeting,
+                        meetingInfo,
+                        courseDescription : description
+                    });
                 }
 
             } catch (e) {

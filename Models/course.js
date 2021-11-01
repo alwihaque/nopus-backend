@@ -39,10 +39,15 @@ const courseSchema = new mongoose.Schema({
         required: true
     },
     meetingInfo: {
-        type: String,
+        type: Array,
         required: true
+    },
+    courseDescription: {
+        type: String,
+        required: true,
+        default: ""
     }
 });
-courseSchema.plugin(mongoose_fuzzy_searching,{fields: ['title']});
+courseSchema.plugin(mongoose_fuzzy_searching,{fields: ['title', 'code', 'courseDescription']});
 
 module.exports = mongoose.model('Course', courseSchema);

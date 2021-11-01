@@ -13,3 +13,6 @@ module.exports.getSpecifiedCourses = async (req,res,next) => {
         console.log(e.message);
     }
 }
+module.exports.generateSchedule = async (req, res, next) => {
+
+}
