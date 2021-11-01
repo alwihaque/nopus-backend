@@ -1,6 +1,6 @@
 const fetch = require('node-fetch');
 const Course = require('../Models/course');
-
+const Building = require('../Models/building');
 
 const params = new URLSearchParams();
 params.append('page', 'fose');
