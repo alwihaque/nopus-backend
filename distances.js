@@ -17,7 +17,7 @@ async function fetch_distances(origin, destination) {
     params: {
       query: origin,
       location: {'lat': 33.791162112779595, 'lng': -84.32403938828458},
-      key: process.env.GOOGLE_MAPS_API_KEY
+      key: "AIzaSyBV-CZQ8oWal5k09bC7KNQsM51yCUj2VT8"
     },
     timeout: 1000 // milliseconds
   }, axiosInstance).then(r => coord_A = r.data.results[0]['geometry']['location']).catch(e => console.log(e));
