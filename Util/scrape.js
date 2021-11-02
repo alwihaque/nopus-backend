@@ -123,7 +123,10 @@ module.exports.getData = async () => {
                 }
                 else if(detailsRes.meeting_html.split(/<[^>]*>/g)[3] !== undefined ) {
                     meetingInfo = detailsRes.meeting_html.split(/<[^>]*>/g)[3];
-                     for(let i = meetingInfo.length - 1; i >= 0; i--) {
+                    if(meetingInfo.includes("New Psyc Bldg") || (meetingInfo.includes("Math") && meetingInfo.includes("Science"))) {
+                        break;
+                    }
+                    for(let i = meetingInfo.length - 1; i >= 0; i--) {
                         if(meetingInfo[i] == ' ') {
                             var buildingName = meetingInfo.substring(0, i);
                             const alreadyExists = await Building.findOne({name:buildingName});
