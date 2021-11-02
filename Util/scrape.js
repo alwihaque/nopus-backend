@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 const Course = require('../Models/course');
 const {sendEmail} = require("./mailer");
-
+const Building = require('./Models/building');
 
 const params = new URLSearchParams();
 params.append('page', 'fose');
@@ -123,6 +123,20 @@ module.exports.getData = async () => {
                 }
                 else if(detailsRes.meeting_html.split(/<[^>]*>/g)[3] !== undefined ) {
                     meetingInfo = detailsRes.meeting_html.split(/<[^>]*>/g)[3];
+                     for(let i = meetingInfo.length - 1; i >= 0; i--) {
+                        if(meetingInfo[i] == ' ') {
+                            var buildingName = meetingInfo.substring(0, i);
+                            const alreadyExists = await Building.findOne({name:buildingName});
+                            if (alreadyExists) {
+                                break;
+                            }
+                            var building = new Building({
+                                name: buildingName
+                            })
+                            building.save();
+                            break;
+                        }
+                    }
                 }
                 //console.log(classTitle);
                 const course = new Course({
