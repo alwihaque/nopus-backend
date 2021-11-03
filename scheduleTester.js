@@ -5,29 +5,29 @@ const getSchedule = async () => {
 
     //friday -> Begin End Time
     await mongoose.connect('mongodb+srv://alwihaque:alwi1234@cluster0.ua0zj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority');
-    const courses = ['CS 370', 'CS 350', 'CPLT 202W', 'ECON 215', 'CS 326'];
+    const courses = ['CS 370', 'CS 350','ECON 215', 'CPLT 202W', 'CS 326'];
     const maxCredit = 19;
     const schedule = [];
     const availabilities = {
         '2': {
-            start: 8,
-            end: 20
+            start: 10,
+            end: 20.00
         },
         '3': {
-            start: 9,
-            end: 18
+            start: 8,
+            end: 20.00
         },
         '4': {
             start: 8,
-            end: 16.50
+            end: 20.00
         },
         '5': {
             start: 8,
-            end: 20
+            end: 20.00
         },
         '6': {
-            start: 12,
-            end: 20
+            start: 8,
+            end: 20.00
         }
     }
     const validSections = [];
@@ -37,10 +37,8 @@ const getSchedule = async () => {
         //console.log(sections);
         for await  (const section of sections) {
             for (let day in availabilities) {
-
-                if (section.meeting.find(meeting => parseInt(day) === meeting[0] && meeting[1] >= availabilities[day].start && availabilities[day].end <= meeting[2])) {
+                if (section.meeting.find(meet => parseInt(day) === meet[0] && meet[1] >= availabilities[day].start &&  meet[2] <= availabilities[day].end)) {
                     validSections.push(section);
-                    console.log(validSections);
                 }
 
 
@@ -56,26 +54,28 @@ const getSchedule = async () => {
 }
 
 const scheduleBuilder = (sections, maxCredit) => {
+   // console.log(sections);
     let maximumCredit = 0;
-
+    //console.log(sections);
     let maxSchedule = [];
 
     for(let i = 0; i < sections.length; i++) {
         let runningCredit = 0;
         let schedule = [];
         schedule.push(sections[i]);
-        runningCredit += sections[i].creditHours;
+        runningCredit += parseInt(sections[i].creditHours);
         for(let j = i + 1; j < sections.length; j++) {
             if(schedule.find(x => x.code === sections[j].code)) {
                 continue;
             }
-            if(runningCredit + sections[j].creditHours > maxCredit) {
+            if(runningCredit + parseInt(sections[j].creditHours) > maxCredit) {
+                console.log('here');
                 continue;
             }
-            let notOverlap;
+            let notOverlap = false;
             for(let meet of sections[j].meeting) {
                 notOverlap = schedule.find(course => {
-                    return course.meeting.find(time => time[2] > meet[1] && meet[2] > time[1] && time[0] === meet[0]);
+                    return course.meeting.find(time => (time[0]!== meet[0]) || (time[0] === meet[0] && (meet[1] > time[2] || meet[2] > time[1]))  );
                 });
                 if(!notOverlap) {
                     break;
@@ -83,11 +83,12 @@ const scheduleBuilder = (sections, maxCredit) => {
             }
             if(notOverlap) {
                 schedule.push(sections[j]);
-                runningCredit += sections[j].creditHours;
+                runningCredit += parseInt(sections[j].creditHours);
             }
         }
-        //console.log(schedule);
+        console.log(schedule);
         maximumCredit = Math.max(runningCredit, maximumCredit);
+        console.log(maximumCredit);
         if(maximumCredit === runningCredit) {
             maxSchedule = schedule;
 
@@ -98,5 +99,8 @@ const scheduleBuilder = (sections, maxCredit) => {
 }
 
 getSchedule().then(x => {
-    console.log(x);
+    x.forEach(cours => {
+        console.log(cours.code);
+        console.log(cours.meeting);
+    })
 });
