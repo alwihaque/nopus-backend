@@ -1,11 +1,10 @@
 const Course = require("./Models/course");
 const mongoose = require('mongoose');
-
 const getSchedule = async () => {
 
     //friday -> Begin End Time
     await mongoose.connect('mongodb+srv://alwihaque:alwi1234@cluster0.ua0zj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority');
-    const courses = ['CS 370', 'CS 350','ECON 215', 'CPLT 202W', 'CS 326'];
+    const courses = ['CS 370', 'CS 350','ECON 215', 'CPLT 202W', 'CS 326', 'CS 334','CS 534'];
     const maxCredit = 19;
     const schedule = [];
     const availabilities = {
@@ -98,9 +97,10 @@ const scheduleBuilder = (sections, maxCredit) => {
 
 }
 
-getSchedule().then(x => {
-    x.forEach(cours => {
-        console.log(cours.code);
-        console.log(cours.meeting);
+getSchedule().then(async x => {
+    x.forEach(course => {
+        console.log(course.code);
+        console.log(course.meeting);
     })
+    await mongoose.connection.close();
 });
