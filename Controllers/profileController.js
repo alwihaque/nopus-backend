@@ -62,7 +62,7 @@ module.exports.setPreferences = async (req, res, next) => {
     const uid = req.params.uid;
     const availabilities = req.body.availabilities;
     try {
-        const user = await User.find(uid);
+        const user = await User.findById(uid);
         if(!user) {
             throw new Error("User Doesn't exist");
         }

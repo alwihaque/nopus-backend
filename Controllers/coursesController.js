@@ -20,6 +20,21 @@ module.exports.getCourse = async (req, res, next) => {
         res.status(400).send(e.message);
     }
 }
+module.exports.getCourseById = async (req, res, next) => {
+    const courseId = req.params.id;
+    try {
+        const course  = await Course.findById(courseId);
+        if(!course) {
+            throw new Error('Course Not Found');
+        }
+        res.status(200).send(course);
+    }
+    catch (e) {
+        logger.log('error',e.message);
+        res.status(400).send(e.message);
+    }
+
+}
 
 module.exports.getSpecifiedCourses = async (req, res, next) => {
     const param = req.params.prefix;
@@ -31,10 +46,6 @@ module.exports.getSpecifiedCourses = async (req, res, next) => {
     }
 }
 
-module.exports.getSchedule = async (req, res, next) => {
-
-
-}
 
 module.exports.generateSchedule = async (req, res, next) => {
 
@@ -69,6 +80,7 @@ module.exports.generateSchedule = async (req, res, next) => {
             return new mongoose.Types.ObjectId(course._id);
         })
         user.courseSchedules = courseIds;
+        await user.save();
         return res.status(200).send(bestSchedule);
     }
     catch (e) {
