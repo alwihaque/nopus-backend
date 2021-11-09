@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node App.js"
+    "start": "nodemon App.js"
   },
   "keywords": [],
   "author": "",
@@ -26,7 +26,8 @@
     "nodemailer": "^6.6.5",
     "nodemailer-sendgrid-transport": "^0.2.0",
     "npm": "^7.24.1",
-    "puppeteer": "^10.4.0"
+    "puppeteer": "^10.4.0",
+    "winston": "^3.3.3"
   },
   "devDependencies": {
     "@googlemaps/google-maps-services-js": "^3.3.1"

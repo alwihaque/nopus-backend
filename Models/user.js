@@ -1,39 +1,18 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-    // email: {
-    //     type: String,
-    //     required: true
-    // },
-    // password: {
-    //     type: String,
-    //     required: true
-    // },
-    // isVerified: {
-    //     type: Boolean,
-    //     required: true,
-    //     default: false
-    // },
-    name: {
-        type: String,
-        required: true
-    },
-    email: {
-        type: String,
-        required: true
-    },
-    password: {
-        type: String,
-        required: true,
-    },
-    isVerified: {
-        type: Boolean,
-        required: true,
-        default: false
-    },
+    major: [{type: String}],
+    minor: [{type: String}],
     graduationTerm: {
-        type: Number,
-        // required: true
+        semester: {
+            type: String,
+            enum: ['Fall', 'Spring'],
+            default: 'Spring'
+        },
+        year: {
+            type: Number,
+            default: new Date(Date.now()).getFullYear()
+        },
     },
     minCredit: {
         type: Number,

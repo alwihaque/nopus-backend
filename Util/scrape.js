@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 const Course = require('../Models/course');
 const {sendEmail} = require("./mailer");
-const Building = require('./Models/building');
+const Building = require('../Models/building');
 
 const params = new URLSearchParams();
 params.append('page', 'fose');
@@ -50,7 +50,7 @@ module.exports.getData = async () => {
                 })[0];
                 //parse meeting times into something more useable
                 let meeting = (function() {
-                    if((section.meets == "Does Not Meet" || section.meets == "Meets Online")) {
+                    if((section.meets === "Does Not Meet" || section.meets === "Meets Online")) {
                         return [];
                     }
                     var ap = section.meets.substring(section.meets.length - 1);
@@ -60,33 +60,33 @@ module.exports.getData = async () => {
                     let i = section.meets.length - 1;
                     let k = section.meets.length;
                     for(; i >= 0; i--) {
-                        if (section.meets[i] == "-") {
+                        if (section.meets[i] === "-") {
                             end += parseInt(section.meets.substring(i+1, k));
                             if(ap == "p") {
                                 end += 12;
                             }
                             break;
                         }
-                        if(section.meets[i] == ":") {
+                        if(section.meets[i] === ":") {
                             k = i;
                             end += parseInt(section.meets.substring(k+1)) / 60.0;
                         }
                     }
                     let j = i; 
-                    if(section.meets[i] == "a" || section.meets[i] == "p") {
+                    if(section.meets[i] === "a" || section.meets[i] === "p") {
                         ap = section.meets[i];
                         i--;
                     }
                     k = i;
                     for (; j > 0; j--) {
-                        if(section.meets[j] == " ") {
+                        if(section.meets[j] === " ") {
                             start += parseInt(section.meets.substring(j+1, k));
                             if(ap === "p") {
                                 start += 12;
                             }
                             break;
                         }
-                        if(section.meets[j] == ":") {
+                        if(section.meets[j] === ":") {
                             k = j;
                             start += parseInt(section.meets.substring(k+1,i)) / 60.0;
                         }
@@ -124,10 +124,10 @@ module.exports.getData = async () => {
                 else if(detailsRes.meeting_html.split(/<[^>]*>/g)[3] !== undefined ) {
                     meetingInfo = detailsRes.meeting_html.split(/<[^>]*>/g)[3];
                     if(meetingInfo.includes("New Psyc Bldg") || (meetingInfo.includes("Math") && meetingInfo.includes("Science"))) {
-                        break;
+                        console.log("New Psyc B")
                     }
                     for(let i = meetingInfo.length - 1; i >= 0; i--) {
-                        if(meetingInfo[i] == ' ') {
+                        if(meetingInfo[i] === ' ') {
                             var buildingName = meetingInfo.substring(0, i);
                             const alreadyExists = await Building.findOne({name:buildingName});
                             if (alreadyExists) {
