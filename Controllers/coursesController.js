@@ -53,8 +53,9 @@ module.exports.generateSchedule = async (req, res, next) => {
     const uid = req.body.uid;
     //['CS 370', 'CS 350','ECON 215', 'CPLT 202W', 'CS 326', 'CS 334','CS 534']
     const courses = req.body.courses;
-    const maxCredit = 19;
-    const schedule = [];
+    const maxCredit = req.body.maxCredit;
+    const minCredit = req.body.minCredit;
+    //const schedule = [];
     try {
         const user = await User.findById(uid);
         const availabilities = user.availabilities;
@@ -75,7 +76,7 @@ module.exports.generateSchedule = async (req, res, next) => {
         if(validSections.length === 0) {
             console.log('Pick Courses');
         }
-        const bestSchedule =  scheduleBuilder(validSections, maxCredit);
+        const bestSchedule =  scheduleBuilder(validSections, maxCredit, minCredit);
         const courseIds = bestSchedule.map(course => {
             return new mongoose.Types.ObjectId(course._id);
         })
@@ -90,7 +91,7 @@ module.exports.generateSchedule = async (req, res, next) => {
     }
 
 }
-const scheduleBuilder = (sections, maxCredit) => {
+const scheduleBuilder = (sections, maxCredit, minCredit) => {
     let maximumCredit = 0;
     let maxSchedule = [];
 
@@ -98,6 +99,10 @@ const scheduleBuilder = (sections, maxCredit) => {
         let runningCredit = 0;
         let schedule = [];
         schedule.push(sections[i]);
+        //make sure first course fits in credit limit
+        if(parseInt(sections[i].creditHours) > maxCredit) {
+            continue;
+        }
         runningCredit += parseInt(sections[i].creditHours);
         for(let j = i + 1; j < sections.length; j++) {
             if(schedule.find(x => x.code === sections[j].code)) {
@@ -106,7 +111,7 @@ const scheduleBuilder = (sections, maxCredit) => {
             if(runningCredit + parseInt(sections[j].creditHours) > maxCredit) {
                 continue;
             }
-            let notOverlap = false;
+            let notOverlap = true; //true for not meeting case
             for(let meet of sections[j].meeting) {
                 notOverlap = schedule.find(course => {
                     return course.meeting.find(time => (time[0]!== meet[0]) || (time[0] === meet[0] && (meet[1] > time[2] || meet[2] > time[1]))  );
@@ -120,12 +125,23 @@ const scheduleBuilder = (sections, maxCredit) => {
                 runningCredit += parseInt(sections[j].creditHours);
             }
         }
-        maximumCredit = Math.max(runningCredit, maximumCredit);
+        //ensure minCredit
+        if(runningCredit < minCredit && typeof schedule != undefined) {
+            schedule.forEach(course => {
+                if(course.creditHours.indexOf('-') != -1) {
+                    runningCredit += Math.min(parseInt(course.creditHours.substring(course.creditHours.indexOf('-') + 1)) - parseInt(course.creditHours.substring(0, course.creditHours.indexOf('-'))), maxCredit - runningCredit);
+                }
+            })
+        }
+        //make sure bigger than minCredit
         if(maximumCredit === runningCredit) {
-            maxSchedule = schedule;
-
+            maxSchedule.push(schedule);
+        }
+        else if(maximumCredit < runningCredit) {
+            maxSchedule = [schedule];
+            maximumCredit = runningCredit;
         }
     }
-    return maxSchedule;
+    return maxSchedule[Math.floor((Math.random() * maxSchedule.length))];
 
 }
