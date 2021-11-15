@@ -1,11 +1,11 @@
+const Building = require("./Models/building");
+const mongoose = require('mongoose');
+const Client = require("@googlemaps/google-maps-services-js");
+const axios = require('axios');
+const client = new Client.Client({});
 
+const key = "AIzaSyBV-CZQ8oWal5k09bC7KNQsM51yCUj2VT8"
 
-
-import { Client, TravelMode } from "@googlemaps/google-maps-services-js";
-
-import axiosInstance from 'axios';
-
-const client = new Client({});
 
 async function fetch_distances(origin, destination) {
 
@@ -17,33 +17,37 @@ async function fetch_distances(origin, destination) {
     params: {
       query: origin,
       location: {'lat': 33.791162112779595, 'lng': -84.32403938828458},
-      key: "AIzaSyBV-CZQ8oWal5k09bC7KNQsM51yCUj2VT8"
+      key: key
     },
     timeout: 1000 // milliseconds
-  }, axiosInstance).then(r => coord_A = r.data.results[0]['geometry']['location']).catch(e => console.log(e));
+  }, axios.axiosInstance).then(r => coord_A = r.data.results[0]['geometry']['location']).catch(e => console.log(e));
 
   // Destination
   await client.textSearch({
     params: {
       query: destination,
       location: {'lat': 33.791162112779595, 'lng': -84.32403938828458},
-      key: process.env.GOOGLE_MAPS_API_KEY
+      key: key
     },
     timeout: 1000 // milliseconds
-  }, axiosInstance).then(r => coord_B = r.data.results[0]['geometry']['location']).catch(e => console.log(e));
+  }, axios.axiosInstance).then(r => coord_B = r.data.results[0]['geometry']['location']).catch(e => console.log(e));
 
+  // From A to B
   let result;
   await client.directions({
     params: {
       origin:coord_A,
       destination: coord_B,
-      mode: TravelMode.walking,
-      key: process.env.GOOGLE_MAPS_API_KEY
+      mode: Client.TravelMode.walking,
+      key: key
     },
     timeout:1000
-  }, axiosInstance).then(r => result = r.data['routes'][0]['legs'][0]['duration']).catch(e => console.log(e));
+  }, axios.axiosInstance).then(r => result = r.data['routes'][0]['legs'][0]['duration']).catch(e => console.log(e));
 
-  return result['text']
+  result = result['text'].replace(/\D/g,''); // Digits only
+  result = parseFloat(result)
+
+  return result
 
 };
 
@@ -61,22 +65,72 @@ async function graph_locations(locations) {
   );
 
   // Itereate and calculate edges for all pairs
-  let duration;
+  let duration_A;
+  let duration_B;
+  let mapDistances = {};
+    
+  console.log(locations.length)
+  console.log(combinations.length*2)
 
   for (const pair of combinations) {
 
-    duration = await fetch_distances(only_text(pair[0]), only_text(pair[1]));
+    try {
+      // From A to B
+      duration_A = await fetch_distances(only_text(pair[0]), only_text(pair[1]));
 
-    console.log("\n%s --> %s: %s", pair[0], pair[1], duration)
+      console.log("\n%s --> %s: %s mins", pair[0], pair[1], duration_A);
+
+      mapDistances[[pair[0], pair[1]]] = duration_A;
+
+      // From B to A
+      duration_B = await fetch_distances(only_text(pair[1]), only_text(pair[0]));
+
+      console.log("\n%s --> %s: %s mins", pair[1], pair[0], duration_B);
+    
+      mapDistances[[pair[1], pair[0]]] = duration_B;  
+
+    } catch(e) {
+      console.log(e);
+    }
   }
+  
+  // Completed distances dictionary here
+  console.log(mapDistances)
+  console.log("done!");
+
 }
 
+
 // Main
-let input_locations = [];
+const display = async () => {
+    try {
+        await mongoose.connect('mongodb+srv://alwihaque:alwi1234@cluster0.ua0zj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority');
+        return await Building.find();
+    }
+    catch(e) {
+        return e;
+    }
+}
 
-// Case 1
-input_locations = ["Rich Building 108", "White Hall 112", "Grace Crum Rollins TBA", "New Psyc Bldg 225"];
 
-console.log("\n-----CASE 2-----");
-console.log("Input locations: %s\n\nOutput:", input_locations);
-graph_locations(input_locations).then(r => console.log(""));
+display().then(x=> {
+  console.log(x)
+  let locations = [];
+
+  for (const doc of x) {
+    if (doc.name == "Modern Language") {
+      locations.push("Modern Languages Building")
+    } 
+    else if (doc.name == "1462 Clifton Rd") {
+      locations.push("1462 Clifton Rd, Atlanta, GA 30329")
+    }
+    else if(doc.name != "1462 Clfton Rd", doc.name != "MODERN") {
+      locations.push(doc.name)
+    }
+  }
+
+  graph_locations(locations);
+    
+}).catch(e => {
+    console.log(e);
+})
