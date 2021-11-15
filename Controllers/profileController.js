@@ -39,15 +39,15 @@ module.exports.setPrevCourses = async(req, res, next) => {
         if(!user) {
             throw new Error("User Doesn't exist");
         }
-        const courseIds = await Promise.all(courseList.map(async courseCode => {
+        const courseCodes = await Promise.all(courseList.map(async courseCode => {
             const course = await Course.findOne({code: courseCode});
-            return new mongoose.Types.ObjectId(course._id);
+            return course.code;
         }));
-        user.coursesTaken = courseIds;
+        user.coursesTaken = courseCodes;
         await user.save();
         const courseListDetails = [];
-        for(let i = 0; i < courseIds.length; i++) {
-            const course = await Course.findById(courseIds[i]);
+        for(let i = 0; i < courseCodes.length; i++) {
+            const course = await Course.findOne({code: courseCodes[i]});
             courseListDetails.push(course);
         }
         return res.status(200).send(courseListDetails);

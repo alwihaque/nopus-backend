@@ -27,8 +27,7 @@ const userSchema = new mongoose.Schema({
         // required: true
     },
     coursesTaken: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Course',
+        type: String,
         default: []
     }],
     courseSchedules: [{
