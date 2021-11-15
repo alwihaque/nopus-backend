@@ -25,6 +25,7 @@
     "node-fetch": "^2.6.1",
     "nodemailer": "^6.6.5",
     "nodemailer-sendgrid-transport": "^0.2.0",
+    "nodemon": "^2.0.15",
     "npm": "^7.24.1",
     "puppeteer": "^10.4.0",
     "winston": "^3.3.3"

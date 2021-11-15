@@ -48,26 +48,35 @@ module.exports.getSpecifiedCourses = async (req, res, next) => {
 
 
 module.exports.generateSchedule = async (req, res, next) => {
-
-    //friday -> Begin End Time
     const uid = req.body.uid;
-    //['CS 370', 'CS 350','ECON 215', 'CPLT 202W', 'CS 326', 'CS 334','CS 534']
+    // ['CS 370', 'CS 350','ECON 215', 'CPLT 202W', 'CS 326', 'CS 334','CS 534']
     const courses = req.body.courses;
     const maxCredit = req.body.maxCredit;
     const minCredit = req.body.minCredit;
-    //const schedule = [];
     try {
         const user = await User.findById(uid);
+        const coursesTaken = user.coursesTaken;
         const availabilities = user.availabilities;
         const validSections = [];
         let sections;
         for (const course of courses) {
+            let skip = 0;
+            for(const taken of coursesTaken) { /*check course not  taken*/
+                if(taken === course) {
+                    skip = 1;
+                    break;
+                }
+            }
+            if(skip) {
+                continue;
+            }
             sections = await Course.find({code: course});
-            for await  (const section of sections) {
+            for await (const section of sections) {
                 for (let day in availabilities) {
                     if (section.meeting.find(meet => parseInt(day) === meet[0] && meet[1] >= availabilities[day].start &&  meet[2] <= availabilities[day].end)) {
                         validSections.push(section);
                     }
+                    
                 }
 
             }
