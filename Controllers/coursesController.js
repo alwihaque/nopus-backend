@@ -45,7 +45,9 @@ module.exports.getSpecifiedCourses = async (req, res, next) => {
         console.log(e.message);
     }
 }
+module.exports.getSchedule = async (req, res, next) => {
 
+};
 
 module.exports.generateSchedule = async (req, res, next) => {
     const uid = req.body.uid;

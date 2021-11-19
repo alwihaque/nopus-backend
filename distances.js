@@ -4,7 +4,7 @@ const Client = require("@googlemaps/google-maps-services-js");
 const axios = require('axios');
 const client = new Client.Client({});
 
-const key = "AIzaSyBV-CZQ8oWal5k09bC7KNQsM51yCUj2VT8"
+const key = "AIzaSyDHclpZjLZi6vC5bJaPU3dyEEz4yrMugKY"
 
 
 async function fetch_distances(origin, destination) {
@@ -79,14 +79,63 @@ async function graph_locations(locations) {
       duration_A = await fetch_distances(only_text(pair[0]), only_text(pair[1]));
 
       console.log("\n%s --> %s: %s mins", pair[0], pair[1], duration_A);
+      let source = pair[0];
 
+      if(source === "Modern Languages Building") {
+        source = "Modern Language";
+      }
+      else if(source === "1462 Clifton Rd, Atlanta, GA 30329") {
+        source = "1462 Clifton Rd";
+      }
+      let sourceObj = await Building.findOne({name: source});
+      if(sourceObj.to === undefined || sourceObj.to === null) {
+        sourceObj.to = [];
+      }
+      let destination = pair[1];
+      if(destination === "Modern Languages Building") {
+        source = "Modern Language";
+      }
+      else if (destination === "1462 Clifton Rd, Atlanta, GA 30329") {
+        source = "1462 Clifton Rd";
+      }
+      let destObj = await Building.findOne({name: destination});
+      const toB = {
+        name: destObj.name,
+        destination: destObj._id,
+        time: duration_A
+      };
+      sourceObj.to.push(toB);
+      await sourceObj.save();
       mapDistances[[pair[0], pair[1]]] = duration_A;
-
       // From B to A
       duration_B = await fetch_distances(only_text(pair[1]), only_text(pair[0]));
-
       console.log("\n%s --> %s: %s mins", pair[1], pair[0], duration_B);
-    
+      source = pair[1];
+      if(source === "Modern Languages Building") {
+        source = "Modern Language";
+      }
+      else if(source === "1462 Clifton Rd, Atlanta, GA 30329") {
+        source = "1462 Clifton Rd";
+      }
+      sourceObj = await Building.findOne({name: source});
+      if(sourceObj.to === undefined || sourceObj.to === null) {
+        sourceObj.to = [];
+      }
+      destination = pair[0];
+      if(destination === "Modern Languages Building") {
+        source = "Modern Language";
+      }
+      else if (destination === "1462 Clifton Rd, Atlanta, GA 30329") {
+        source = "1462 Clifton Rd";
+      }
+      destObj = await Building.findOne({name: destination});
+      const toA = {
+        name: destObj.name,
+        destination: destObj._id,
+        time: duration_B
+      };
+      sourceObj.to.push(toA);
+      await sourceObj.save();
       mapDistances[[pair[1], pair[0]]] = duration_B;  
 
     } catch(e) {
