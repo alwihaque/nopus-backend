@@ -2,15 +2,24 @@ const express = require('express');
 const helmet = require('helmet');
 const mongoose = require('mongoose');
 const authRoute = require('./Routes/auth');
+const cors = require('cors');
 const courseRoute = require('./Routes/courses');
 const profileRoute = require('./Routes/profile');
 const scrape = require('./Util/timer');
 const logger = require('./Util/logger');
 
-
 scrape.scrapeEvery12Hrs();
 const app = express();
 app.use(helmet());
+app.use(function (req, res, next) {
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+    res.setHeader('Access-Control-Allow-Credentials', true);
+
+    next();
+});
 app.use(express.json());
 app.use(profileRoute);
 app.use(authRoute);
