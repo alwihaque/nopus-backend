@@ -2,6 +2,7 @@ const express = require('express');
 const helmet = require('helmet');
 const mongoose = require('mongoose');
 const authRoute = require('./Routes/auth');
+const bodyParser = require('body-parser');
 const cors = require('cors');
 const courseRoute = require('./Routes/courses');
 const profileRoute = require('./Routes/profile');
@@ -10,7 +11,8 @@ const logger = require('./Util/logger');
 
 scrape.scrapeEvery12Hrs();
 const app = express();
-app.use(express.json());
+app.us(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.json());
 app.use(helmet());
 app.use(cors());
 app.use(profileRoute);
