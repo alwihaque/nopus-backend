@@ -5,8 +5,8 @@ const profileController = require('../Controllers/profileController');
 /*
     Route to update preferences
  */
-router.put('/profile/majorMinor/:uid', profileController.setMajorAndGrad);
-router.put('/profile/courseList/:uid', profileController.setPrevCourses);
-router.put("/profile/preferences/:uid", profileController.setPreferences);
+router.post('/profile/majorMinor/:uid', profileController.setMajorAndGrad);
+router.post('/profile/courseList/:uid', profileController.setPrevCourses);
+router.post("/profile/preferences/:uid", profileController.setPreferences);
 
 module.exports = router;
