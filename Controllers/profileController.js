@@ -9,6 +9,7 @@ module.exports.setMajorAndGrad = async(req, res, next) => {
     const minor = req.body.minor;
     const gradSem = req.body.gradSem;
     const gradYr = req.body.gradYr;
+    console.log(major,minor,gradSem, gradYr);
     try {
         const user = await User.findById(userId);
         if(!user) {
