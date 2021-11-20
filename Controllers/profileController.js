@@ -21,6 +21,7 @@ module.exports.setMajorAndGrad = async(req, res, next) => {
             year: gradYr
         };
         await user.save();
+        console.log(user);
         return res.status(200).send(user);
     }
     catch(e) {
