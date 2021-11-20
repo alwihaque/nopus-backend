@@ -11,7 +11,7 @@ const logger = require('./Util/logger');
 
 scrape.scrapeEvery12Hrs();
 const app = express();
-app.us(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.use(helmet());
 app.use(cors());
