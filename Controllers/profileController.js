@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const Course = require('../Models/course');
 const logger = require('../Util/logger');
 module.exports.setMajorAndGrad = async(req, res, next) => {
+    console.log(req.body);
     const userId = req.params.uid;
     const major = req.body.major;
     const minor = req.body.minor;
