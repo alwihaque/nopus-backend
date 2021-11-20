@@ -24,7 +24,7 @@ module.exports.setMajorAndGrad = async(req, res, next) => {
         return res.status(200).send(user);
     }
     catch(e) {
-        logger.log('error',e.message);
+        console.log('error',e.message);
         return res.status(401).send(e.message);
     }
 
@@ -53,7 +53,7 @@ module.exports.setPrevCourses = async(req, res, next) => {
         return res.status(200).send(courseListDetails);
     }
     catch (e) {
-        logger.log('error',e.message);
+        console.log('error',e.message);
         return res.status(401).send(e.message);
     }
 }
@@ -71,7 +71,7 @@ module.exports.setPreferences = async (req, res, next) => {
         return res.status(200).send(user);
     }
     catch (e) {
-        logger.log('error',e.message);
+        console.log('error',e.message);
         return res.status(401).send(e.message);
 
     }
