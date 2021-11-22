@@ -8,6 +8,7 @@ const courseRoute = require('./Routes/courses');
 const profileRoute = require('./Routes/profile');
 const scrape = require('./Util/timer');
 const logger = require('./Util/logger');
+const scraper = require('./Util/scrape');
 
 scrape.scrapeEvery12Hrs();
 const app = express();

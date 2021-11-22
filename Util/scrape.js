@@ -10,7 +10,6 @@ params.append('camp', 'ATL');
 params.append('career', 'UCOL');
 
 module.exports.getData = async () => {
-    console.log('here');
     const response = await fetch("https://atlas.emory.edu/api/?page=fose&route=search&camp=ATL&career=UCOL", {
         "body": '{"other":{"srcdb":"5219"},"criteria":[{"field":"camp","value":"ATL"},{"field":"career","value":"UCOL"}]}',
         "method": "POST"
@@ -123,10 +122,32 @@ module.exports.getData = async () => {
                 }
                 else if(detailsRes.meeting_html.split(/<[^>]*>/g)[3] !== undefined ) {
                     meetingInfo = detailsRes.meeting_html.split(/<[^>]*>/g)[3];
-                    if(meetingInfo.includes("New Psyc Bldg") || (meetingInfo.includes("Math") && meetingInfo.includes("Science"))) {
-                        console.log("New Psyc B")
+                    let build = true;
+                    if(meetingInfo.includes("MODERN")) {
+                        build = false;
                     }
-                    for(let i = meetingInfo.length - 1; i >= 0; i--) {
+                    /* Add back in if we rerun distances.js
+                    if(meetingInfo.includes("New Psyc Bldg")) {
+                        meetingInfo = "New Psyc Bldg";
+                        if(!await Building.findOne({name:meetingInfo})) {
+                            var building = new Building({
+                                name: meetingInfo
+                            });
+                            building.save();
+                        }
+                        build = false;
+                    }*/
+                    if(meetingInfo.includes("Math") && meetingInfo.includes("Science")) {
+                        meetingInfo = "Math and Science Center";
+                        if(!await Building.findOne({name:meetingInfo})) {
+                            var building = new Building({
+                                name: meetingInfo
+                            });
+                            building.save();
+                        }
+                        build = false;
+                    }
+                    for(let i = meetingInfo.length - 1; i >= 0 && build; i--) {
                         if(meetingInfo[i] === ' ') {
                             var buildingName = meetingInfo.substring(0, i);
                             const alreadyExists = await Building.findOne({name:buildingName});
@@ -159,7 +180,6 @@ module.exports.getData = async () => {
                     code: courseId
                 });
                 if (!exist) {
-                    console.log("here");
                     await course.save();
                 }
                 if(exist){

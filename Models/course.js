@@ -39,7 +39,7 @@ const courseSchema = new mongoose.Schema({
         required: true
     },
     meetingInfo: {
-        type: Array,
+        type: String,
         required: true
     },
     courseDescription: {

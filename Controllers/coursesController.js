@@ -1,7 +1,13 @@
 const Course = require("../Models/course");
+const Schedule = require("../Models/courseSchedule");
+const Building = require("../Models/building");
 const logger = require('../Util/logger');
 const User = require('../Models/user');
 const mongoose = require('mongoose');
+const {
+    MinPriorityQueue } = require('@datastructures-js/priority-queue');
+const course = require("../Models/course");
+
 module.exports.getCourses = async (req, res, next) => {
     const courses = await Course.find({});
     res.status(200).send(courses);
@@ -63,10 +69,12 @@ module.exports.generateSchedule = async (req, res, next) => {
         let sections;
         for (const course of courses) {
             let skip = 0;
-            for(const taken of coursesTaken) { /*check course not  taken*/
-                if(taken === course) {
-                    skip = 1;
-                    break;
+            if(coursesTaken != null) {
+                for(const taken of coursesTaken) { /*check course not  taken*/
+                    if(taken === course) {
+                        skip = 1;
+                        break;
+                    }
                 }
             }
             if(skip) {
@@ -87,11 +95,19 @@ module.exports.generateSchedule = async (req, res, next) => {
         if(validSections.length === 0) {
             console.log('Pick Courses');
         }
-        const bestSchedule =  scheduleBuilder(validSections, maxCredit, minCredit);
-        const courseIds = bestSchedule.map(course => {
-            return new mongoose.Types.ObjectId(course._id);
-        })
-        user.courseSchedules = courseIds;
+        const s = await scheduleBuilder(validSections, maxCredit, minCredit);
+        const bestSchedule =  new Schedule ({
+            credits: s[1],
+            courses: s[0]
+        });
+        bestSchedule.save();
+        // console.log(bestSchedule.id);
+
+        // const courseIds = bestSchedule.map(course => {
+        //     return new mongoose.Types.ObjectId(course._id);
+        // })
+
+        user.courseSchedules.push(bestSchedule.id);
         await user.save();
         return res.status(200).send(bestSchedule);
     }
@@ -102,9 +118,13 @@ module.exports.generateSchedule = async (req, res, next) => {
     }
 
 }
-const scheduleBuilder = (sections, maxCredit, minCredit) => {
+const scheduleBuilder = async (sections, maxCredit, minCredit) => {
     let maximumCredit = 0;
-    let maxSchedule = [];
+    // let maxSchedule = new MinPriorityQueue();
+    
+    let maxSchedule = new MinPriorityQueue({
+        priority: (a) => a[1]               //Should be a min queue with priority based off element 1 in the array
+    });
 
     for(let i = 0; i < sections.length; i++) {
         let runningCredit = 0;
@@ -144,15 +164,81 @@ const scheduleBuilder = (sections, maxCredit, minCredit) => {
                 }
             })
         }
+        //console.log(DistanceCalculator(schedule));
         //make sure bigger than minCredit
         if(maximumCredit === runningCredit) {
-            maxSchedule.push(schedule);
+            let num = await DistanceCalculator(schedule);
+            maxSchedule.enqueue([[schedule, runningCredit], num]);
         }
         else if(maximumCredit < runningCredit) {
-            maxSchedule = [schedule];
+            maxSchedule = new MinPriorityQueue({ //Reset priority queue
+                priority: (a) => a[1]
+            });
+            let num = await DistanceCalculator(schedule);
+            maxSchedule.enqueue([[schedule, runningCredit], num]);
             maximumCredit = runningCredit;
         }
     }
-    return maxSchedule[Math.floor((Math.random() * maxSchedule.length))];
+   //console.log(maxSchedule.dequeue());
+    return maxSchedule.dequeue().element[0]; //Since breaking ties with walking time,just return minimum from the minqueue
+}
 
+const DistanceCalculator = async(schedule) => {
+    //cycle through days
+    let walkingTime = 0;
+    for(let i = 2; i < 7; i++) { //Traverse days
+        let courseOrder = new MinPriorityQueue({
+            priority: (a) => a[1]               //Should be a min queue with priority based off element 1 in the array
+        });
+        for(let j = 0; j < schedule.length; j++) { //Traverse courses
+            //console.log("course " + j + " " + schedule[j] + (schedule));
+            if(schedule[j].meetingInfo !== "No meeting info" && schedule[j].meetingInfo != undefined) {
+                for(let k = 0; k < schedule[j].meeting.length; k++) { //Grab meeting times for each day. Priority based on start time
+                    //console.log("check match " + schedule[j].meeting[k][0] + " " + i);
+                    if(schedule[j].meeting[k][0] === i) {
+                        courseOrder.enqueue([schedule[j].meetingInfo, schedule[j].meeting[k][1]]);
+                        //console.log("enqueue " + i + " " + schedule[j].meetingInfo);
+                    }
+                }}
+        }
+        //console.log(courseOrder.dequeue());
+        let prevCourse;
+        if(!courseOrder.isEmpty()) {
+            prevCourse = courseOrder.dequeue().element[0]; }//Store the course (not the priority)
+        while(!courseOrder.isEmpty()) {
+            let currCourse = courseOrder.dequeue().element[0];
+
+            prevCourse = checkCourseName(prevCourse);
+            currCourse = checkCourseName(currCourse);
+            //console.log("updated names: " + prevCourse + " / " + currCourse);
+            let loc1 = await Building.findOne({name: {"$regex": prevCourse}});
+            for(let k = 0; k < loc1.to.length; k++) {
+                if(loc1.to[k].name === currCourse) {
+                    // console.log(prevCourse + " -> " + currCourse + " " + loc1.to[k].time);
+                    walkingTime += loc1.to[k].time;
+                    break;
+                }
+            }
+            prevCourse = currCourse;
+        }
+    }
+    return walkingTime;
+}
+
+const checkCourseName = (course) => {
+    if(course.includes("Math")  && course.includes("Science")) {
+        return "Math and Science Center";
+    }
+    /*
+    if(course.includes("New Psyc Bldg")) {
+        return "New Psych Bldg";
+    }*/
+    if(course === "Online") {
+        return "Woodruff Library";
+    }
+    for(let i = course.length - 1; i >= 0; i--) {
+        if(course[i] === ' ') {
+            return course.substring(0, i);
+        }
+    }
 }
