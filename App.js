@@ -16,8 +16,8 @@ app.use(cors());
 app.use(profileRoute);
 app.use(authRoute);
 app.use(courseRoute);
-timer.scrapeEvery12Hrs();
-timer.scrapeGoogleMaps();
+// timer.scrapeEvery12Hrs();
+// timer.scrapeGoogleMaps();
 
 app.get("/", (req, res, next) => {
     res.status(200).send(`<h1> Available Routes </h1>
