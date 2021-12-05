@@ -1,5 +1,4 @@
-const Building = require("./Models/building");
-const mongoose = require('mongoose');
+const Building = require("../Models/building");
 const Client = require("@googlemaps/google-maps-services-js");
 const axios = require('axios');
 const client = new Client.Client({});
@@ -60,7 +59,7 @@ function only_text(text) {
 async function graph_locations(locations) {
 
   // All possible connections between locations
-  var combinations = [].concat(...locations.map( 
+  var combinations = [].concat(...locations.map(
       (v, i) => locations.slice(i+1).map( w => [v, w]))
   );
 
@@ -68,7 +67,7 @@ async function graph_locations(locations) {
   let duration_A;
   let duration_B;
   let mapDistances = {};
-    
+
   console.log(locations.length)
   console.log(combinations.length*2)
 
@@ -136,13 +135,13 @@ async function graph_locations(locations) {
       };
       sourceObj.to.push(toA);
       await sourceObj.save();
-      mapDistances[[pair[1], pair[0]]] = duration_B;  
+      mapDistances[[pair[1], pair[0]]] = duration_B;
 
     } catch(e) {
       console.log(e);
     }
   }
-  
+
   // Completed distances dictionary here
   console.log(mapDistances)
   console.log("done!");
@@ -152,34 +151,34 @@ async function graph_locations(locations) {
 
 // Main
 const display = async () => {
-    try {
-        await mongoose.connect('mongodb+srv://alwihaque:alwi1234@cluster0.ua0zj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority');
-        return await Building.find();
-    }
-    catch(e) {
-        return e;
-    }
+  try {
+    return await Building.find();
+  }
+  catch(e) {
+    return e;
+  }
 }
 
+module.exports.runScraper = () => {
+  display().then(x=> {
+    console.log(x)
+    let locations = [];
 
-display().then(x=> {
-  console.log(x)
-  let locations = [];
-
-  for (const doc of x) {
-    if (doc.name == "Modern Language") {
-      locations.push("Modern Languages Building")
-    } 
-    else if (doc.name == "1462 Clifton Rd") {
-      locations.push("1462 Clifton Rd, Atlanta, GA 30329")
+    for (const doc of x) {
+      if (doc.name == "Modern Language") {
+        locations.push("Modern Languages Building")
+      }
+      else if (doc.name == "1462 Clifton Rd") {
+        locations.push("1462 Clifton Rd, Atlanta, GA 30329")
+      }
+      else if(doc.name != "1462 Clfton Rd"|| doc.name != "MODERN") {
+        locations.push(doc.name);
+      }
     }
-    else if(doc.name != "1462 Clfton Rd", doc.name != "MODERN") {
-      locations.push(doc.name)
-    }
-  }
 
-  graph_locations(locations);
-    
-}).catch(e => {
+    graph_locations(locations);
+
+  }).catch(e => {
     console.log(e);
-})
+  })
+};

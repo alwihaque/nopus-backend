@@ -2,7 +2,6 @@ const fetch = require('node-fetch');
 const Course = require('../Models/course');
 const {sendEmail} = require("./mailer");
 const Building = require('../Models/building');
-
 const params = new URLSearchParams();
 params.append('page', 'fose');
 params.append('route', 'search');
@@ -126,17 +125,6 @@ module.exports.getData = async () => {
                     if(meetingInfo.includes("MODERN")) {
                         build = false;
                     }
-                    /* Add back in if we rerun distances.js
-                    if(meetingInfo.includes("New Psyc Bldg")) {
-                        meetingInfo = "New Psyc Bldg";
-                        if(!await Building.findOne({name:meetingInfo})) {
-                            var building = new Building({
-                                name: meetingInfo
-                            });
-                            building.save();
-                        }
-                        build = false;
-                    }*/
                     if(meetingInfo.includes("Math") && meetingInfo.includes("Science")) {
                         meetingInfo = "Math and Science Center";
                         if(!await Building.findOne({name:meetingInfo})) {
@@ -162,7 +150,17 @@ module.exports.getData = async () => {
                         }
                     }
                 }
-                //console.log(classTitle);
+                if(description === null || description === undefined || description === "") {
+                    console.log("here\n");
+                    description = "No Description Found";
+                }
+                if(meetingInfo === null || meetingInfo === undefined || meetingInfo === "") {
+                    console.log("here\n");
+                    meetingInfo = "No meeting info";
+                }
+                //console.log(meetingInfo);
+                console.log(description);
+                //console.log(courseId);
                 const course = new Course({
                     code: courseId,
                     crn: classCrn,
@@ -172,17 +170,19 @@ module.exports.getData = async () => {
                     availableSeats,
                     waitListTotal,
                     section: classSection,
+                    semester: "Fall 2021",
                     meeting,
                     meetingInfo,
                     courseDescription : description
                 });
                 const exist = await Course.exists({
-                    code: courseId
+                    code: courseId,
+                    crn: classCrn
                 });
                 if (!exist) {
                     await course.save();
                 }
-                if(exist){
+                else{
                     //update course
                     await Course.findOneAndUpdate({code:courseId},{
                         code: courseId,
@@ -193,6 +193,7 @@ module.exports.getData = async () => {
                         availableSeats,
                         waitListTotal,
                         section: classSection,
+                        semester: "Fall 2021",
                         meeting,
                         meetingInfo,
                         courseDescription : description
@@ -209,6 +210,9 @@ module.exports.getData = async () => {
 
     }
 
-}
+};
+
+
+
 
 

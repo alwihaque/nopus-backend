@@ -34,6 +34,10 @@ const courseSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    semester: {
+        type: String,
+        required: true
+    },
     meeting: {
         type: Array,
         required: true

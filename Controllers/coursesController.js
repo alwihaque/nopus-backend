@@ -5,7 +5,8 @@ const logger = require('../Util/logger');
 const User = require('../Models/user');
 const mongoose = require('mongoose');
 const {
-    MinPriorityQueue } = require('@datastructures-js/priority-queue');
+    MinPriorityQueue
+} = require('@datastructures-js/priority-queue');
 const course = require("../Models/course");
 
 module.exports.getCourses = async (req, res, next) => {
@@ -15,28 +16,26 @@ module.exports.getCourses = async (req, res, next) => {
 module.exports.getCourse = async (req, res, next) => {
     const courseCode = req.params.courseCode;
     try {
-        const course  = await Course.find({courseCode});
-        if(!course) {
+        const course = await Course.find({courseCode});
+        if (!course) {
             throw new Error('Course Not Found');
         }
         res.status(200).send(course);
-    }
-    catch (e) {
-        logger.log('error',e.message);
+    } catch (e) {
+        logger.log('error', e.message);
         res.status(400).send(e.message);
     }
 }
 module.exports.getCourseById = async (req, res, next) => {
     const courseId = req.params.id;
     try {
-        const course  = await Course.findById(courseId);
-        if(!course) {
+        const course = await Course.findById(courseId);
+        if (!course) {
             throw new Error('Course Not Found');
         }
         res.status(200).send(course);
-    }
-    catch (e) {
-        logger.log('error',e.message);
+    } catch (e) {
+        logger.log('error', e.message);
         res.status(400).send(e.message);
     }
 
@@ -52,6 +51,35 @@ module.exports.getSpecifiedCourses = async (req, res, next) => {
     }
 }
 module.exports.getSchedule = async (req, res, next) => {
+    const uid = req.body.uid;
+    try {
+        const user = await User.findById(uid);
+        if (user.courseSchedules === null || user.courseSchedules === undefined) {
+            throw new Error('User Not Found\n');
+        }
+        //get schedule
+        const courseSchedule = await Schedule.find(user.courseSchedules);
+        if (courseSchedule === null || courseSchedule === undefined) {
+            throw new Error('Schedule Not Found\n');
+        }
+        const courses = [];
+        const courseIds = courseSchedule.courses;
+        for (let courseId of courseIds) {
+
+            const course = await Course.find(courseId);
+            if (course === null || course === undefined) {
+                throw Error('Course No Longer In Database\n');
+            }
+            courses.push(course);
+
+
+        }
+        res.status(200).send(courses);
+    } catch (e) {
+
+        res.status(400).send(e.message);
+
+    }
 
 };
 
@@ -59,48 +87,55 @@ module.exports.generateSchedule = async (req, res, next) => {
     const uid = req.body.uid;
     // ['CS 370', 'CS 350','ECON 215', 'CPLT 202W', 'CS 326', 'CS 334','CS 534']
     const courses = req.body.courses;
-    const maxCredit = req.body.maxCredit;
-    const minCredit = req.body.minCredit;
+
     try {
         const user = await User.findById(uid);
         const coursesTaken = user.coursesTaken;
+        const maxCredit = user.maxCredit;
+        const minCredit = user.minCredit;
         const availabilities = user.availabilities;
+        /*
+        {
+
+        }
+        */
+
         const validSections = [];
         let sections;
         for (const course of courses) {
             let skip = 0;
-            if(coursesTaken != null) {
-                for(const taken of coursesTaken) { /*check course not  taken*/
-                    if(taken === course) {
+            if (coursesTaken != null) {
+                for (const taken of coursesTaken) { /*check course not  taken*/
+                    if (taken === course) {
                         skip = 1;
                         break;
                     }
                 }
             }
-            if(skip) {
+            if (skip) {
                 continue;
             }
             sections = await Course.find({code: course});
             for await (const section of sections) {
                 for (let day in availabilities) {
-                    if (section.meeting.find(meet => parseInt(day) === meet[0] && meet[1] >= availabilities[day].start &&  meet[2] <= availabilities[day].end)) {
+                    if (section.meeting.find(meet => parseInt(day) === meet[0] && meet[1] >= availabilities[day].start && meet[2] <= availabilities[day].end)) {
                         validSections.push(section);
                     }
-                    
+
                 }
 
             }
 
         }
-        if(validSections.length === 0) {
+        if (validSections.length === 0) {
             console.log('Pick Courses');
         }
         const s = await scheduleBuilder(validSections, maxCredit, minCredit);
-        const bestSchedule =  new Schedule ({
+        const bestSchedule = new Schedule({
             credits: s[1],
             courses: s[0]
         });
-        bestSchedule.save();
+        await bestSchedule.save();
         // console.log(bestSchedule.id);
 
         // const courseIds = bestSchedule.map(course => {
@@ -110,8 +145,7 @@ module.exports.generateSchedule = async (req, res, next) => {
         user.courseSchedules.push(bestSchedule.id);
         await user.save();
         return res.status(200).send(bestSchedule);
-    }
-    catch (e) {
+    } catch (e) {
         logger.log('error', e.message);
         res.status(400).send(e.message);
 
@@ -121,56 +155,54 @@ module.exports.generateSchedule = async (req, res, next) => {
 const scheduleBuilder = async (sections, maxCredit, minCredit) => {
     let maximumCredit = 0;
     // let maxSchedule = new MinPriorityQueue();
-    
+
     let maxSchedule = new MinPriorityQueue({
         priority: (a) => a[1]               //Should be a min queue with priority based off element 1 in the array
     });
 
-    for(let i = 0; i < sections.length; i++) {
+    for (let i = 0; i < sections.length; i++) {
         let runningCredit = 0;
         let schedule = [];
         schedule.push(sections[i]);
         //make sure first course fits in credit limit
-        if(parseInt(sections[i].creditHours) > maxCredit) {
+        if (parseInt(sections[i].creditHours) > maxCredit) {
             continue;
         }
         runningCredit += parseInt(sections[i].creditHours);
-        for(let j = i + 1; j < sections.length; j++) {
-            if(schedule.find(x => x.code === sections[j].code)) {
+        for (let j = i + 1; j < sections.length; j++) {
+            if (schedule.find(x => x.code === sections[j].code)) {
                 continue;
             }
-            if(runningCredit + parseInt(sections[j].creditHours) > maxCredit) {
+            if (runningCredit + parseInt(sections[j].creditHours) > maxCredit) {
                 continue;
             }
             let notOverlap = true; //true for not meeting case
-            for(let meet of sections[j].meeting) {
+            for (let meet of sections[j].meeting) {
                 notOverlap = schedule.find(course => {
-                    return course.meeting.find(time => (time[0]!== meet[0]) || (time[0] === meet[0] && (meet[1] > time[2] || meet[2] > time[1]))  );
+                    return course.meeting.find(time => (time[0] !== meet[0]) || (time[0] === meet[0] && (meet[1] > time[2] || meet[2] > time[1])));
                 });
-                if(!notOverlap) {
+                if (!notOverlap) {
                     break;
                 }
             }
-            if(notOverlap) {
+            if (notOverlap) {
                 schedule.push(sections[j]);
                 runningCredit += parseInt(sections[j].creditHours);
             }
         }
         //ensure minCredit
-        if(runningCredit < minCredit && typeof schedule != undefined) {
+        if (runningCredit < minCredit && typeof schedule != undefined) {
             schedule.forEach(course => {
-                if(course.creditHours.indexOf('-') != -1) {
+                if (course.creditHours.indexOf('-') != -1) {
                     runningCredit += Math.min(parseInt(course.creditHours.substring(course.creditHours.indexOf('-') + 1)) - parseInt(course.creditHours.substring(0, course.creditHours.indexOf('-'))), maxCredit - runningCredit);
                 }
             })
         }
-        //console.log(DistanceCalculator(schedule));
-        //make sure bigger than minCredit
-        if(maximumCredit === runningCredit) {
+
+        if (maximumCredit === runningCredit) {
             let num = await DistanceCalculator(schedule);
             maxSchedule.enqueue([[schedule, runningCredit], num]);
-        }
-        else if(maximumCredit < runningCredit) {
+        } else if (maximumCredit < runningCredit) {
             maxSchedule = new MinPriorityQueue({ //Reset priority queue
                 priority: (a) => a[1]
             });
@@ -179,41 +211,43 @@ const scheduleBuilder = async (sections, maxCredit, minCredit) => {
             maximumCredit = runningCredit;
         }
     }
-   //console.log(maxSchedule.dequeue());
+    //console.log(maxSchedule.dequeue());
     return maxSchedule.dequeue().element[0]; //Since breaking ties with walking time,just return minimum from the minqueue
 }
 
-const DistanceCalculator = async(schedule) => {
+const DistanceCalculator = async (schedule) => {
     //cycle through days
     let walkingTime = 0;
-    for(let i = 2; i < 7; i++) { //Traverse days
+    for (let i = 2; i < 7; i++) { //Traverse days
         let courseOrder = new MinPriorityQueue({
             priority: (a) => a[1]               //Should be a min queue with priority based off element 1 in the array
         });
-        for(let j = 0; j < schedule.length; j++) { //Traverse courses
+        for (let j = 0; j < schedule.length; j++) { //Traverse courses
             //console.log("course " + j + " " + schedule[j] + (schedule));
-            if(schedule[j].meetingInfo !== "No meeting info" && schedule[j].meetingInfo != undefined) {
-                for(let k = 0; k < schedule[j].meeting.length; k++) { //Grab meeting times for each day. Priority based on start time
+            if (schedule[j].meetingInfo !== "No meeting info" && schedule[j].meetingInfo != undefined) {
+                for (let k = 0; k < schedule[j].meeting.length; k++) { //Grab meeting times for each day. Priority based on start time
                     //console.log("check match " + schedule[j].meeting[k][0] + " " + i);
-                    if(schedule[j].meeting[k][0] === i) {
+                    if (schedule[j].meeting[k][0] === i) {
                         courseOrder.enqueue([schedule[j].meetingInfo, schedule[j].meeting[k][1]]);
                         //console.log("enqueue " + i + " " + schedule[j].meetingInfo);
                     }
-                }}
+                }
+            }
         }
         //console.log(courseOrder.dequeue());
         let prevCourse;
-        if(!courseOrder.isEmpty()) {
-            prevCourse = courseOrder.dequeue().element[0]; }//Store the course (not the priority)
-        while(!courseOrder.isEmpty()) {
+        if (!courseOrder.isEmpty()) {
+            prevCourse = courseOrder.dequeue().element[0];
+        }//Store the course (not the priority)
+        while (!courseOrder.isEmpty()) {
             let currCourse = courseOrder.dequeue().element[0];
 
             prevCourse = checkCourseName(prevCourse);
             currCourse = checkCourseName(currCourse);
             //console.log("updated names: " + prevCourse + " / " + currCourse);
             let loc1 = await Building.findOne({name: {"$regex": prevCourse}});
-            for(let k = 0; k < loc1.to.length; k++) {
-                if(loc1.to[k].name === currCourse) {
+            for (let k = 0; k < loc1.to.length; k++) {
+                if (loc1.to[k].name === currCourse) {
                     // console.log(prevCourse + " -> " + currCourse + " " + loc1.to[k].time);
                     walkingTime += loc1.to[k].time;
                     break;
@@ -226,18 +260,15 @@ const DistanceCalculator = async(schedule) => {
 }
 
 const checkCourseName = (course) => {
-    if(course.includes("Math")  && course.includes("Science")) {
+    if (course.includes("Math") && course.includes("Science")) {
         return "Math and Science Center";
     }
-    /*
-    if(course.includes("New Psyc Bldg")) {
-        return "New Psych Bldg";
-    }*/
-    if(course === "Online") {
+
+    if (course === "Online") {
         return "Woodruff Library";
     }
-    for(let i = course.length - 1; i >= 0; i--) {
-        if(course[i] === ' ') {
+    for (let i = course.length - 1; i >= 0; i--) {
+        if (course[i] === ' ') {
             return course.substring(0, i);
         }
     }

@@ -6,14 +6,14 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const courseRoute = require('./Routes/courses');
 const profileRoute = require('./Routes/profile');
-const scrape = require('./Util/timer');
+const timer = require('./Util/timer');
 const logger = require('./Util/logger');
-const scraper = require('./Util/scrape');
 
-scrape.scrapeEvery12Hrs();
+
 const app = express();
 app.use(bodyParser.json());
-app.use(helmet());
+timer.scrapeEvery12Hrs();
+timer.scrapeGoogleMaps();
 app.use(cors());
 app.use(profileRoute);
 app.use(authRoute);

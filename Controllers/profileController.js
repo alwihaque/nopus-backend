@@ -64,12 +64,16 @@ module.exports.setPrevCourses = async(req, res, next) => {
 module.exports.setPreferences = async (req, res, next) => {
     const uid = req.params.uid;
     const availabilities = req.body.availabilities;
+    const minCredit = parseInt(req.body.minCredit);
+    const maxCredit = parseInt(req.body.maxCredit);
     try {
         const user = await User.findById(uid);
         if(!user) {
             throw new Error("User Doesn't exist");
         }
         user.availabilities = availabilities;
+        user.minCredit = minCredit;
+        user.maxCredit = maxCredit;
         await user.save();
         return res.status(200).send(user);
     }
