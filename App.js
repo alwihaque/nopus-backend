@@ -8,16 +8,16 @@ const courseRoute = require('./Routes/courses');
 const profileRoute = require('./Routes/profile');
 const timer = require('./Util/timer');
 const logger = require('./Util/logger');
-
-
+const scraper = require('./Util/scrape');
+//scraper.getData();
 const app = express();
 app.use(bodyParser.json());
-timer.scrapeEvery12Hrs();
-timer.scrapeGoogleMaps();
 app.use(cors());
 app.use(profileRoute);
 app.use(authRoute);
 app.use(courseRoute);
+timer.scrapeEvery12Hrs();
+timer.scrapeGoogleMaps();
 
 app.get("/", (req, res, next) => {
     res.status(200).send(`<h1> Available Routes </h1>
