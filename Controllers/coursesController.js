@@ -39,6 +39,7 @@ module.exports.getCourseById = async (req, res, next) => {
 
 module.exports.getSpecifiedCourses = async (req, res, next) => {
     const param = req.params.prefix.toUpperCase();
+    console.log(param);
     try {
         const courses = await Course.find({code: param});
         if(!courses || courses.length === 0) {
