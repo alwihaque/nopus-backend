@@ -42,17 +42,12 @@ module.exports.getCourseById = async (req, res, next) => {
 }
 
 module.exports.getSpecifiedCourses = async (req, res, next) => {
-    const param = req.params.prefix.toUpperCase();
+    const param = req.params.prefix;
     try {
-        const course = await Course.findOne({code: param});
-        if(!course) {
-            throw new Error("Course Not Found\n");
-        }
-        res.status(200).send(course);
-    }
-    catch (e) {
+        const courses = await Course.fuzzySearch(param).exec();
+        res.status(200).send(courses);
+    } catch (e) {
         console.log(e.message);
-        res.status(404).send(e.message);
     }
 }
 module.exports.getSchedule = async (req, res, next) => {
@@ -97,11 +92,8 @@ module.exports.generateSchedule = async (req, res, next) => {
         const user = await User.findById(uid);
         const coursesTaken = user.coursesTaken;
         const maxCredit = user.maxCredit;
-        console.log(maxCredit);
         const minCredit = user.minCredit;
-        console.log(minCredit);
         const availabilities = user.availabilities;
-
 
         const validSections = [];
         let sections;
@@ -131,7 +123,7 @@ module.exports.generateSchedule = async (req, res, next) => {
 
         }
         if (validSections.length === 0) {
-            console.log('Pick Courses');
+            throw new Error('Pick Courses');
         }
         const s = await scheduleBuilder(validSections, maxCredit, minCredit);
         const bestSchedule = new Schedule({
@@ -139,15 +131,17 @@ module.exports.generateSchedule = async (req, res, next) => {
             courses: s[0]
         });
         await bestSchedule.save();
+        // console.log(bestSchedule.id);
 
+        // const courseIds = bestSchedule.map(course => {
+        //     return new mongoose.Types.ObjectId(course._id);
+        // })
 
         user.courseSchedules.push(bestSchedule.id);
         await user.save();
         return res.status(200).send(bestSchedule);
     } catch (e) {
-        console.log("here\m");
         logger.log('error', e.message);
-
         res.status(400).send(e.message);
 
     }
@@ -160,7 +154,6 @@ const scheduleBuilder = async (sections, maxCredit, minCredit) => {
     let maxSchedule = new MinPriorityQueue({
         priority: (a) => a[1]               //Should be a min queue with priority based off element 1 in the array
     });
-    console.log(sections);
 
     for (let i = 0; i < sections.length; i++) {
         let runningCredit = 0;
@@ -195,7 +188,7 @@ const scheduleBuilder = async (sections, maxCredit, minCredit) => {
         //ensure minCredit
         if (runningCredit < minCredit && typeof schedule != undefined) {
             schedule.forEach(course => {
-                if (course.creditHours.indexOf('-') !== -1) {
+                if (course.creditHours.indexOf('-') != -1) {
                     runningCredit += Math.min(parseInt(course.creditHours.substring(course.creditHours.indexOf('-') + 1)) - parseInt(course.creditHours.substring(0, course.creditHours.indexOf('-'))), maxCredit - runningCredit);
                 }
             })
@@ -213,7 +206,6 @@ const scheduleBuilder = async (sections, maxCredit, minCredit) => {
             maximumCredit = runningCredit;
         }
     }
-    //console.log(maxSchedule.dequeue());
     //console.log(maxSchedule.dequeue());
     return maxSchedule.dequeue().element[0]; //Since breaking ties with walking time,just return minimum from the minqueue
 }
