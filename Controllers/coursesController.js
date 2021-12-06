@@ -16,7 +16,7 @@ module.exports.getCourses = async (req, res, next) => {
 module.exports.getCourse = async (req, res, next) => {
     const courseCode = req.params.courseCode;
     try {
-        const course = await Course.find({courseCode});
+        const course = await Course.findOne({courseCode});
         if (!course) {
             throw new Error('Course Not Found');
         }
@@ -44,7 +44,7 @@ module.exports.getCourseById = async (req, res, next) => {
 module.exports.getSpecifiedCourses = async (req, res, next) => {
     const param = req.params.prefix.toUpperCase();
     try {
-        const courses = await Course.findOne({code: param});
+        const courses = await Course.find({code: param});
         if(!course) {
             throw Error("Course Not Found\n");
         }
