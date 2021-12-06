@@ -10,7 +10,7 @@ params.append('career', 'UCOL');
 
 module.exports.getData = async () => {
     const response = await fetch("https://atlas.emory.edu/api/?page=fose&route=search&camp=ATL&career=UCOL", {
-        "body": '{"other":{"srcdb":"5219"},"criteria":[{"field":"camp","value":"ATL"},{"field":"career","value":"UCOL"}]}',
+        "body": '{"other":{"srcdb":"5221"},"criteria":[{"field":"camp","value":"ATL"},{"field":"career","value":"UCOL"}]}',
         "method": "POST"
     });
     let answer = await response.json();
@@ -21,7 +21,7 @@ module.exports.getData = async () => {
                 const crn = results[i].crn;
                 const code = results[i].code;
                 const details = await fetch("https://atlas.emory.edu/api/?page=fose&route=details", {
-                    "body": `{"group":"code:${code}","key":"crn:${crn}","srcdb":"5219","matched":"crn:${crn}"}`,
+                    "body": `{"group":"code:${code}","key":"crn:${crn}","srcdb":"5221","matched":"crn:${crn}"}`,
                     "method": "POST"
                 });
                 const detailsRes = await details.json();
@@ -42,6 +42,7 @@ module.exports.getData = async () => {
                 }
                 else {
                     waitListTotal = detailsRes.seats.split('<strong>')[3].split(' ')[2];
+                    waitListTotal = waitListTotal.replace(/,/g, '');
                 }
                 let section = detailsRes.allInGroup.filter(section => {
                     return section.key === classCode;
@@ -170,14 +171,15 @@ module.exports.getData = async () => {
                     availableSeats,
                     waitListTotal,
                     section: classSection,
-                    semester: "Fall 2021",
+                    semester: "Spring 2022",
                     meeting,
                     meetingInfo,
                     courseDescription : description
                 });
                 const exist = await Course.exists({
                     code: courseId,
-                    crn: classCrn
+                    crn: classCrn,
+                    semester: "Fall 2021",
                 });
                 if (!exist) {
                     await course.save();
@@ -193,7 +195,7 @@ module.exports.getData = async () => {
                         availableSeats,
                         waitListTotal,
                         section: classSection,
-                        semester: "Fall 2021",
+                        semester: "Spring 2022",
                         meeting,
                         meetingInfo,
                         courseDescription : description
