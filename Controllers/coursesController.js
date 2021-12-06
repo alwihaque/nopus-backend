@@ -94,11 +94,6 @@ module.exports.generateSchedule = async (req, res, next) => {
         const maxCredit = user.maxCredit;
         const minCredit = user.minCredit;
         const availabilities = user.availabilities;
-        /*
-        {
-
-        }
-        */
 
         const validSections = [];
         let sections;
@@ -128,7 +123,7 @@ module.exports.generateSchedule = async (req, res, next) => {
 
         }
         if (validSections.length === 0) {
-            console.log('Pick Courses');
+            throw new Error('Pick Courses');
         }
         const s = await scheduleBuilder(validSections, maxCredit, minCredit);
         const bestSchedule = new Schedule({
