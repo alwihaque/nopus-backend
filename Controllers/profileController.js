@@ -43,7 +43,7 @@ module.exports.setPrevCourses = async(req, res, next) => {
             throw new Error("User Doesn't exist");
         }
         const courseCodes = await Promise.all(courseList.map(async courseCode => {
-            const course = await Course.findOne({code: courseCode});
+            const course = await Course.find({code: courseCode});
             return course.code;
         }));
         user.coursesTaken = courseCodes;
