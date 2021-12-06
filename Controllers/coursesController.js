@@ -42,12 +42,16 @@ module.exports.getCourseById = async (req, res, next) => {
 }
 
 module.exports.getSpecifiedCourses = async (req, res, next) => {
-    const param = req.params.prefix;
+    const param = req.params.prefix.toUpperCase();
     try {
-        const courses = await Course.fuzzySearch(param).exec();
+        const courses = await Course.findOne({code: param});
+        if(!course) {
+            throw Error("Course Not Found\n");
+        }
         res.status(200).send(courses);
     } catch (e) {
         console.log(e.message);
+        res.status(400).send(e.message);
     }
 }
 module.exports.getSchedule = async (req, res, next) => {
