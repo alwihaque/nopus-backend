@@ -3,7 +3,6 @@ const Schedule = require("../Models/courseSchedule");
 const Building = require("../Models/building");
 const logger = require('../Util/logger');
 const User = require('../Models/user');
-const mongoose = require('mongoose');
 const {
     MinPriorityQueue
 } = require('@datastructures-js/priority-queue');
@@ -17,9 +16,6 @@ module.exports.getCourse = async (req, res, next) => {
     const courseCode = req.params.courseCode;
     try {
         const course = await Course.findOne({courseCode});
-        if (!course) {
-            throw new Error('Course Not Found');
-        }
         res.status(200).send(course);
     } catch (e) {
         logger.log('error', e.message);
@@ -45,7 +41,7 @@ module.exports.getSpecifiedCourses = async (req, res, next) => {
     const param = req.params.prefix.toUpperCase();
     try {
         const courses = await Course.find({code: param});
-        if(!course) {
+        if(!courses || courses.length === 0) {
             throw Error("Course Not Found\n");
         }
         res.status(200).send(courses);
@@ -89,7 +85,6 @@ module.exports.getSchedule = async (req, res, next) => {
 
 module.exports.generateSchedule = async (req, res, next) => {
     const uid = req.body.uid;
-    // ['CS 370', 'CS 350','ECON 215', 'CPLT 202W', 'CS 326', 'CS 334','CS 534']
     const courses = req.body.courses;
 
     try {
