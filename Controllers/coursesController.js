@@ -38,13 +38,16 @@ module.exports.getCourseById = async (req, res, next) => {
 }
 
 module.exports.getSpecifiedCourses = async (req, res, next) => {
+    if(param === NULL) {
+
+    }
     const param = req.params.prefix.toUpperCase();
-    console.log(param);
     try {
         const courses = await Course.find({code: param});
         if(!courses || courses.length === 0) {
             throw Error("Course Not Found\n");
         }
+        console.log()
         res.status(200).send(courses);
     } catch (e) {
         console.log(e.message);
@@ -59,8 +62,8 @@ module.exports.getSchedule = async (req, res, next) => {
             throw new Error('User Not Found\n');
         }
         //get schedule
-        const courseSchedule = await Schedule.find(user.courseSchedules);
-        if (courseSchedule === null || courseSchedule === undefined) {
+        const courseSchedule = await Schedule.find(user.courseSchedules[0]);
+        if (courseSchedule === null || courseSchedule === undefined || courseSchedule.length === 0) {
             throw new Error('Schedule Not Found\n');
         }
         const courses = [];
@@ -87,6 +90,7 @@ module.exports.getSchedule = async (req, res, next) => {
 module.exports.generateSchedule = async (req, res, next) => {
     const uid = req.body.uid;
     const courses = req.body.courses;
+    const sem = req.body.semester;
 
     try {
         const user = await User.findById(uid);
@@ -118,7 +122,7 @@ module.exports.generateSchedule = async (req, res, next) => {
             sections = await Course.find({code: course});
             for await (const section of sections) {
                 for (let day in availabilities) {
-                    if (section.meeting.find(meet => parseInt(day) === meet[0] && meet[1] >= availabilities[day].start && meet[2] <= availabilities[day].end)) {
+                    if (section.semester === sem && section.meeting.find(meet => parseInt(day) === meet[0] && meet[1] >= availabilities[day].start && meet[2] <= availabilities[day].end)) {
                         validSections.push(section);
                     }
 
