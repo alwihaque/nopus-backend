@@ -38,9 +38,7 @@ module.exports.getCourseById = async (req, res, next) => {
 }
 
 module.exports.getSpecifiedCourses = async (req, res, next) => {
-    if(param === NULL) {
 
-    }
     const param = req.params.prefix.toUpperCase();
     try {
         const courses = await Course.find({code: param});
@@ -55,28 +53,30 @@ module.exports.getSpecifiedCourses = async (req, res, next) => {
     }
 }
 module.exports.getSchedule = async (req, res, next) => {
-    const uid = req.body.uid;
+    const uid = req.params.id;
     try {
         const user = await User.findById(uid);
-        if (user.courseSchedules === null || user.courseSchedules === undefined) {
-            throw new Error('User Not Found\n');
+        if(user === null) {
+            throw new Error('User Does Not Exist');
         }
-        //get schedule
-        const courseSchedule = await Schedule.find(user.courseSchedules[0]);
-        if (courseSchedule === null || courseSchedule === undefined || courseSchedule.length === 0) {
-            throw new Error('Schedule Not Found\n');
+        //Check if schedule exists
+        const schedules = user.courseSchedules;
+        if(schedules === null || schedules === undefined || schedules.length < 1) {
+            throw new Error("A Schedule Does Not Exist\n");
+        }
+        const schedule = user.courseSchedules.pop();
+        const scheduleAsCS = await Schedule.findById(schedule);
+        if (scheduleAsCS === null || scheduleAsCS === undefined || scheduleAsCS.length === 0) {
+            throw new Error("Schedule  Might Have Been Deleted or Something Went Wrong\n");
         }
         const courses = [];
-        const courseIds = courseSchedule.courses;
+        const courseIds = scheduleAsCS.courses;
         for (let courseId of courseIds) {
-
-            const course = await Course.find(courseId);
+            const course = await Course.findById(courseId);
             if (course === null || course === undefined) {
                 throw Error('Course No Longer In Database\n');
             }
             courses.push(course);
-
-
         }
         res.status(200).send(courses);
     } catch (e) {
@@ -98,11 +98,7 @@ module.exports.generateSchedule = async (req, res, next) => {
         const maxCredit = user.maxCredit;
         const minCredit = user.minCredit;
         const availabilities = user.availabilities;
-        /*
-        {
 
-        }
-        */
 
         const validSections = [];
         let sections;
